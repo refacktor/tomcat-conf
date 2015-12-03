@@ -26,7 +26,7 @@
 
       <Host name="localhost"  appBase="webapps" unpackWARs="true" autoDeploy="true">
         <Valve className="org.apache.plugins.AccessLogJdkValve" 
-               pattern="%h %l %u %t &quot;%r&quot; %s %b %{Referer}i %{User-Agent}i %T" />
+               pattern="%h %l %u %t &quot;%r&quot; %s %b &quot;%{Referer}i&quot; &quot;%{User-Agent}i&quot; %T" />
       </Host>
 
     </Engine>
