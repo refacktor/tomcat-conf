@@ -25,8 +25,8 @@
       </Realm>
 
       <Host name="localhost"  appBase="webapps" unpackWARs="true" autoDeploy="true">
-        <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
-               prefix="localhost_access_log." suffix=".txt" pattern="%h %l %u %t &quot;%r&quot; %s %b %{Referer}i %{User-Agent}i %T" />
+        <Valve className="org.apache.plugins.AccessLogJdkValve" 
+               pattern="%h %l %u %t &quot;%r&quot; %s %b %{Referer}i %{User-Agent}i %T" />
       </Host>
 
     </Engine>
