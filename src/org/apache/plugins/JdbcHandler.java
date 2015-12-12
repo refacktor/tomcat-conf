@@ -20,7 +20,7 @@ import javax.xml.bind.Marshaller;
 import javax.xml.namespace.QName;
 
 /**
- * Minimalistic JDBC log handler.
+ * Minimalistic JDBC log handler plugin for java.util.logging.
  */
 public class JdbcHandler extends Handler {
 
@@ -80,10 +80,10 @@ public class JdbcHandler extends Handler {
 				JAXBElement<LogRecord> je = new JAXBElement<>(new QName("log"), LogRecord.class, record);
 				Marshaller marshaller = jc.createMarshaller();
 				marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-				ByteArrayOutputStream json = new ByteArrayOutputStream();
-				marshaller.marshal(je, json);
+				ByteArrayOutputStream xml = new ByteArrayOutputStream();
+				marshaller.marshal(je, xml);
 
-				pStmtInsert.setString(1, json.toString());
+				pStmtInsert.setString(1, xml.toString());
 				pStmtInsert.executeUpdate();
 
 			} catch (SQLException | JAXBException e) {
