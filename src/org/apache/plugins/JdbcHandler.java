@@ -4,6 +4,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -24,7 +26,7 @@ import javax.xml.namespace.QName;
  */
 public class JdbcHandler extends Handler {
 
-	private String url;
+	private String dbUrl;
 	private String driver;
 	private String user;
 	private String password;
@@ -36,10 +38,12 @@ public class JdbcHandler extends Handler {
 		try {
 			Properties p = new Properties();
 			String path = System.getProperty("ctc.config.path");
-			FileInputStream fis = new FileInputStream(new File(path, "database.properties"));
-			p.load(fis);
+			URL propertiesUrl = new URL(path + "/database.properties");
+			InputStream is = propertiesUrl.openStream();
+			p.load(is);
+			is.close();
 
-			url = p.getProperty("database.url");
+			dbUrl = p.getProperty("database.url");
 			driver = p.getProperty("database.driver.classname");
 			user = p.getProperty("database.username");
 			password = p.getProperty("database.password");
@@ -62,7 +66,7 @@ public class JdbcHandler extends Handler {
 	}
 
 	private void connect() throws SQLException {
-		connection = DriverManager.getConnection(url, user, password);
+		connection = DriverManager.getConnection(dbUrl, user, password);
 		pStmtInsert = connection.prepareStatement("INSERT INTO log_raw_xml VALUES (NOW(), ?)");
 	}
 
