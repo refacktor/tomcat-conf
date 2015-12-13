@@ -1,1 +1,3 @@
+org/apache/plugins/JdbcHandler.class
 org/apache/plugins/AccessLogJdkValve.class
+org/apache/plugins/JdbcHandler$1.class
