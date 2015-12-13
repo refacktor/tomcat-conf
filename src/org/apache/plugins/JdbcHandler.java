@@ -1,8 +1,10 @@
 package org.apache.plugins;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.net.InetAddress;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -12,15 +14,25 @@ import java.util.Properties;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import javax.xml.namespace.QName;
 
 /**
  * Minimalistic JDBC log handler plugin for java.util.logging.
+    
+    create table if not exists log_server(
+    	id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT, 
+    	level VARCHAR(7) NOT NULL,
+    	hostname VARCHAR(255) NOT NULL,
+    	dbTimeStamp TIMESTAMP NOT NULL,
+    	millis BIGINT NOT NULL,
+    	loggerName VARCHAR(255) NOT NULL,
+    	message LONGTEXT NOT NULL,
+    	sequenceNumber INT NOT NULL,
+    	sourceClassName VARCHAR(255) NOT NULL,
+    	sourceMethodName VARCHAR(255) NOT NULL,
+    	threadID INT NOT NULL,
+    	thrown LONGTEXT NOT NULL
+    );
  */
 public class JdbcHandler extends Handler {
 
@@ -31,9 +43,13 @@ public class JdbcHandler extends Handler {
 
 	private Connection connection;
 	private PreparedStatement pStmtInsert;
+	
+	private String hostname;
 
 	public JdbcHandler() {
 		try {
+			this.hostname = InetAddress.getLocalHost().getHostName();
+			
 			Properties p = new Properties();
 			String path = System.getProperty("ctc.config.path");
 			URL propertiesUrl = new URL(path + "/database.properties");
@@ -50,7 +66,6 @@ public class JdbcHandler extends Handler {
 			this.connect();
 			
 			System.out.println("JdbcHandler Connected to database " + dbUrl);
-			System.out.println("Don't forget to create table: create table if not exists log_raw_xml(uts TIMESTAMP, xml LONGTEXT)");
 
 		} catch (IOException | SQLException | ClassNotFoundException e) {
 			System.err.println("something wrong with configuration properties");
@@ -61,7 +76,10 @@ public class JdbcHandler extends Handler {
 
 	private void connect() throws SQLException {
 		connection = DriverManager.getConnection(dbUrl, user, password);
-		pStmtInsert = connection.prepareStatement("INSERT INTO log_raw_xml VALUES (NOW(), ?)");
+
+		pStmtInsert = connection.prepareStatement(
+				"INSERT INTO log_server(dbTimeStamp,millis,loggerName,message,sequenceNumber,"+
+				"sourceClassName,sourceMethodName,threadID,hostname,level,thrown) VALUES (NOW(),?,?,?,?,?,?,?,?,?,?)");
 	}
 
 	@Override
@@ -72,33 +90,32 @@ public class JdbcHandler extends Handler {
 
 		int retries = 3;
 
-		while (retries-- >= 0) {
+		while (--retries >= 0) {
 			try {
-				JAXBContext jc = JAXBContext.newInstance(LogRecord.class);
-				JAXBElement<LogRecord> je = new JAXBElement<>(new QName("log"), LogRecord.class, record);
-				Marshaller marshaller = jc.createMarshaller();
-				marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-				marshaller.setAdapter(new XmlAdapter<String,String>() {
-					@Override
-				    public String marshal(String v) throws Exception {
-				        if(null == v || v.length() == 0) {
-				            return null;
-				        }
-				        return v;
-				    }
-					@Override
-					public String unmarshal(String v) throws Exception {
-						return v;
-					}
-				});
-				ByteArrayOutputStream xml = new ByteArrayOutputStream();
-				marshaller.marshal(je, xml);
-
-				pStmtInsert.setString(1, xml.toString());
+				pStmtInsert.setLong(1, record.getMillis());
+				pStmtInsert.setString(2, record.getLoggerName());
+				pStmtInsert.setString(3, record.getMessage());
+				pStmtInsert.setInt(4, (int)record.getSequenceNumber());
+				pStmtInsert.setString(5, record.getSourceClassName());
+				pStmtInsert.setString(6, record.getSourceMethodName());
+				pStmtInsert.setInt(7, (int)record.getThreadID());
+				pStmtInsert.setString(8, this.hostname);
+				pStmtInsert.setString(9, record.getLevel().getName());
+				
+				if(record.getThrown() != null) {
+					StringWriter sw = new StringWriter();
+					record.getThrown().printStackTrace(new PrintWriter(sw));
+					pStmtInsert.setString(10, sw.toString());
+				}
+				else {
+					pStmtInsert.setString(10, null);
+				}
+		    	
 				pStmtInsert.executeUpdate();
+				return; // don't retry
 
-			} catch (SQLException | JAXBException e) {
-				System.err.println("Failed to log to database! Will retry another " + retries + " times.");
+			} catch (SQLException e) {
+				System.err.println("Failed to log to database! Will retry another " + retries + " times. Error: " + e.toString());
 				try {
 					Thread.sleep(1000);
 					this.connect();
