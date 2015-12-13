@@ -52,7 +52,7 @@ public class JdbcHandler extends Handler {
 			this.connect();
 			
 			System.out.println("JdbcHandler Connected to database " + dbUrl);
-			System.out.println("Don't forget to create table:\ncreate table if not exists log_raw_xml(uts TIMESTAMP, xml LONGTEXT)");
+			System.out.println("Don't forget to create table: create table if not exists log_raw_xml(uts TIMESTAMP, xml LONGTEXT)");
 
 		} catch (IOException | SQLException | ClassNotFoundException e) {
 			System.err.println("something wrong with configuration properties");
