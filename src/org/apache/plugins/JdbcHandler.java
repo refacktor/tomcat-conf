@@ -1,8 +1,6 @@
 package org.apache.plugins;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -10,7 +8,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Properties;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
@@ -19,6 +16,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.namespace.QName;
 
 /**
@@ -80,6 +78,19 @@ public class JdbcHandler extends Handler {
 				JAXBElement<LogRecord> je = new JAXBElement<>(new QName("log"), LogRecord.class, record);
 				Marshaller marshaller = jc.createMarshaller();
 				marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+				marshaller.setAdapter(new XmlAdapter<String,String>() {
+					@Override
+				    public String marshal(String v) throws Exception {
+				        if(null == v || v.length() == 0) {
+				            return null;
+				        }
+				        return v;
+				    }
+					@Override
+					public String unmarshal(String v) throws Exception {
+						return v;
+					}
+				});
 				ByteArrayOutputStream xml = new ByteArrayOutputStream();
 				marshaller.marshal(je, xml);
 
