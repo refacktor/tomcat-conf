@@ -15,7 +15,7 @@
     <Engine name="Catalina" defaultHost="localhost">
 
       <Host name="localhost"  appBase="webapps" unpackWARs="true" autoDeploy="true">
-        <Valve className="org.apache.plugins.AccessLogJdkValve" 
+        <Valve className="org.apache.plugins.AccessLogJdbcValve" 
                pattern="%h %l %u %t &quot;%r&quot; %s %b &quot;%{Referer}i&quot; &quot;%{User-Agent}i&quot; %T %S %{user_id}s" />
       </Host>
 
