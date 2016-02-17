@@ -8,6 +8,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
+import java.util.Date;
 
 import org.apache.catalina.valves.AccessLogValve;
 
@@ -44,7 +45,7 @@ public class AccessLogJdbcValve extends AccessLogValve {
 			Class.forName(driver);
 			this.connect();
 			
-			System.out.println("JdbcHandler Connected to database " + dbUrl);
+			System.out.println(new Date() + " " + this.getClass().getName() + " Connected to database " + dbUrl);
 
 		} catch (IOException | SQLException | ClassNotFoundException e) {
 			System.err.println("something wrong with configuration properties");
@@ -72,6 +73,7 @@ public class AccessLogJdbcValve extends AccessLogValve {
 				return; // don't retry
 
 			} catch (SQLException e) {
+				System.err.println(new Date().toString() + " " + this.getClass().getName() + ": " + record);
 				System.err.println("Failed to log to database! Will retry another " + retries + " times. Error: " + e.toString());
 				try {
 					Thread.sleep(1000);

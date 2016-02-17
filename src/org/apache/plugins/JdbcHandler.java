@@ -13,26 +13,12 @@ import java.sql.SQLException;
 import java.util.Properties;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
+import java.util.Date;
 
 import javax.xml.bind.JAXBException;
 
 /**
  * Minimalistic JDBC log handler plugin for java.util.logging.
-    
-    create table if not exists log_server(
-    	id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT, 
-    	level VARCHAR(7) NOT NULL,
-    	hostname VARCHAR(255) NOT NULL,
-    	dbTimeStamp TIMESTAMP NOT NULL,
-    	millis BIGINT NOT NULL,
-    	loggerName VARCHAR(255) NOT NULL,
-    	message LONGTEXT NOT NULL,
-    	sequenceNumber INT NOT NULL,
-    	sourceClassName VARCHAR(255) NOT NULL,
-    	sourceMethodName VARCHAR(255) NOT NULL,
-    	threadID INT NOT NULL,
-    	thrown LONGTEXT NOT NULL
-    );
  */
 public class JdbcHandler extends Handler {
 
@@ -65,7 +51,7 @@ public class JdbcHandler extends Handler {
 			Class.forName(driver);
 			this.connect();
 			
-			System.out.println("JdbcHandler Connected to database " + dbUrl);
+                        System.out.println(new Date() + " " + this.getClass().getName() + " Connected to database " + dbUrl);
 
 		} catch (IOException | SQLException | ClassNotFoundException e) {
 			System.err.println("something wrong with configuration properties");
@@ -78,7 +64,7 @@ public class JdbcHandler extends Handler {
 		connection = DriverManager.getConnection(dbUrl, user, password);
 
 		pStmtInsert = connection.prepareStatement(
-				"INSERT INTO log_server(dbTimeStamp,millis,loggerName,message,sequenceNumber,"+
+				"INSERT INTO log_application(dbTimeStamp,millis,loggerName,message,sequenceNumber,"+
 				"sourceClassName,sourceMethodName,threadID,hostname,level,thrown) VALUES (NOW(),?,?,?,?,?,?,?,?,?,?)");
 	}
 
@@ -115,6 +101,7 @@ public class JdbcHandler extends Handler {
 				return; // don't retry
 
 			} catch (SQLException e) {
+                                System.err.println(new Date().toString() + " " + this.getClass().getName());
 				System.err.println("Failed to log to database! Will retry another " + retries + " times. Error: " + e.toString());
 				try {
 					Thread.sleep(1000);
