@@ -5,11 +5,13 @@ import java.io.InputStream;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Properties;
 import java.util.Date;
+import java.util.Properties;
 
+import org.apache.catalina.connector.Request;
+import org.apache.catalina.connector.Response;
 import org.apache.catalina.valves.AccessLogValve;
 
 /**
@@ -26,6 +28,8 @@ public class AccessLogJdbcValve extends AccessLogValve {
 	private String password;
 
 	private Connection connection;
+	private PreparedStatement statement;
+	private String sqlStatement;
 	
 	public AccessLogJdbcValve() {
 		try {
@@ -56,34 +60,62 @@ public class AccessLogJdbcValve extends AccessLogValve {
 
 	private void connect() throws SQLException {
 		connection = DriverManager.getConnection(dbUrl, user, password);
+		statement = connection.prepareStatement(sqlStatement);
 	}
 
 	@Override
-	public void log(String record) {
+	public void log(String nothing) {
+		throw new UnsupportedOperationException();
+	}
+	
+    @Override
+    public void log(Request request, Response response, long time) {
+        if (!getState().isAvailable() || !getEnabled() ||
+                logElements == null || condition != null
+                && null != request.getRequest().getAttribute(condition)) {
+            return;
+        }
+        
+        Date date = new Date();
 
 		int retries = 3;
 
 		while (--retries >= 0) {
-			try(Statement stmt = connection.createStatement()) {
-				
-				int rc = stmt.executeUpdate(record);
-				if(rc != 1) {
-					throw new SQLException("Row Count = " + rc);
-				}
-				return; // don't retry
 
+			try {
+				
+				for (int i = 0; i < logElements.length; i++) {
+
+					if(logElements[i] instanceof StringElement) 
+						throw new IllegalArgumentException();
+
+					StringBuilder result = new StringBuilder(128);
+					logElements[i].addElement(result, date, request, response, time);
+					
+					statement.setString(i+1, result.toString());
+				}
+				if(statement.executeUpdate() != 1) {
+					throw new SQLException("not inserted 1 row");
+				}
+				return;
+				
 			} catch (SQLException e) {
-				System.err.println(new Date().toString() + " " + this.getClass().getName() + ": " + record);
+				
 				System.err.println("Failed to log to database! Will retry another " + retries + " times. Error: " + e.toString());
 				try {
 					Thread.sleep(1000);
 					this.connect();
 					System.err.println("Reconnect OK");
 				} catch (InterruptedException | SQLException blah) {
-					System.err.println(record);
 					System.err.println("Reconnect FAILED");
 				}
 			}
 		}
-	}
+
+    }
+    
+    public void setStatement(String statement) {
+    	this.sqlStatement = statement;
+    }
+
 }

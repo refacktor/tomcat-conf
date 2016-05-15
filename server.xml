@@ -15,9 +15,9 @@
     <Engine name="Catalina" defaultHost="localhost">
 
       <Host name="localhost"  appBase="webapps" unpackWARs="true" autoDeploy="true">
-        <Valve className="org.apache.plugins.AccessLogJdbcValve" 
-               pattern="insert into log_access (server_ts,remote_ip,local_ip,method,url,query_string,protocol,http_status,bytes_sent,referer,user_agent,req_time,session_id,user_id,agent_proxy,rsp_time,thread_name) values ('%t','%a','%A','%m','%U','%q','%H',%s,%B,'%{Referer}i','%{User-Agent}i',%T,'%S',IF('%{user_id}s'='-',NULL,CAST('%{user_id}s' AS DECIMAL)),NOT('%{agent_proxy}s' = '-'),%F/1000.0,'%I')" />
-               <!-- pattern="%h %l %u %t &quot;%r&quot; %s %b &quot;%{Referer}i&quot; &quot;%{User-Agent}i&quot; %T %S %{user_id}s" / -->
+        <Valve className="org.apache.plugins.AccessLogJdbcValve"
+        	   statement="insert into log_access (server_ts,remote_ip,local_ip,method,url,query_string,protocol,http_status,bytes_sent,referer,user_agent,req_time,session_id,user_id,agent_proxy,rsp_time,thread_name) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)" 
+               pattern="%t%a%A%m%U%q%H%s%B%{Referer}i%{User-Agent}i%T%S%{user_id}s%{agent_proxy}s%F%I" />
       </Host>
 
     </Engine>
