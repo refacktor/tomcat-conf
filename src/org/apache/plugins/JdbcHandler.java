@@ -50,7 +50,11 @@ public class JdbcHandler extends Handler {
 			Class.forName(driver);
 			this.connect();
 			
-			this.publish(new LogRecord(Level.CONFIG, "JdbcHandler connected successfully"));
+			LogRecord lr = new LogRecord(Level.CONFIG, "JdbcHandler connected successfully");
+			lr.setLoggerName(this.getClass().getName());
+			lr.setSourceClassName(this.getClass().getName());
+			lr.setSourceMethodName("Constructor");
+			this.publish(lr);
 
 			System.out.println(new Date() + " " + this.getClass().getName() + " Connected to database " + dbUrl);
 

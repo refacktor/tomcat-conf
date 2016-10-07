@@ -29,7 +29,7 @@ public class AccessLogJdbcValve extends AccessLogValve {
 
 	private Connection connection;
 	private PreparedStatement statement;
-	private String sqlStatement;
+	private String sqlStatement = "insert into log_access (server_ts,remote_ip,local_ip,method,url,query_string,protocol,http_status,bytes_sent,referer,user_agent,req_time,session_id,user_id,agent_proxy,rsp_time,thread_name) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 	
 	public AccessLogJdbcValve() {
 		try {
