@@ -10,12 +10,11 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.Properties;
 import java.util.logging.Handler;
+import java.util.logging.Level;
 import java.util.logging.LogRecord;
-import java.util.Date;
-
-import javax.xml.bind.JAXBException;
 
 /**
  * Minimalistic JDBC log handler plugin for java.util.logging.
@@ -29,13 +28,13 @@ public class JdbcHandler extends Handler {
 
 	private Connection connection;
 	private PreparedStatement pStmtInsert;
-	
+
 	private String hostname;
 
 	public JdbcHandler() {
 		try {
 			this.hostname = InetAddress.getLocalHost().getHostName();
-			
+
 			Properties p = new Properties();
 			String path = System.getProperty("ctc.config.path");
 			URL propertiesUrl = new URL(path + "/database.properties");
@@ -51,7 +50,9 @@ public class JdbcHandler extends Handler {
 			Class.forName(driver);
 			this.connect();
 			
-                        System.out.println(new Date() + " " + this.getClass().getName() + " Connected to database " + dbUrl);
+			this.publish(new LogRecord(Level.CONFIG, "JdbcHandler connected successfully"));
+
+			System.out.println(new Date() + " " + this.getClass().getName() + " Connected to database " + dbUrl);
 
 		} catch (IOException | SQLException | ClassNotFoundException e) {
 			System.err.println("something wrong with configuration properties");
@@ -63,9 +64,9 @@ public class JdbcHandler extends Handler {
 	private void connect() throws SQLException {
 		connection = DriverManager.getConnection(dbUrl, user, password);
 
-		pStmtInsert = connection.prepareStatement(
-				"INSERT INTO log_application(dbTimeStamp,millis,loggerName,message,sequenceNumber,"+
-				"sourceClassName,sourceMethodName,threadID,hostname,level,thrown) VALUES (NOW(),?,?,?,?,?,?,?,?,?,?)");
+		pStmtInsert = connection
+				.prepareStatement("INSERT INTO log_application(dbTimeStamp,millis,loggerName,message,sequenceNumber,"
+						+ "sourceClassName,sourceMethodName,threadID,hostname,level,thrown) VALUES (NOW(),?,?,?,?,?,?,?,?,?,?)");
 	}
 
 	@Override
@@ -81,28 +82,28 @@ public class JdbcHandler extends Handler {
 				pStmtInsert.setLong(1, record.getMillis());
 				pStmtInsert.setString(2, record.getLoggerName());
 				pStmtInsert.setString(3, record.getMessage());
-				pStmtInsert.setInt(4, (int)record.getSequenceNumber());
+				pStmtInsert.setInt(4, (int) record.getSequenceNumber());
 				pStmtInsert.setString(5, record.getSourceClassName());
 				pStmtInsert.setString(6, record.getSourceMethodName());
-				pStmtInsert.setInt(7, (int)record.getThreadID());
+				pStmtInsert.setInt(7, (int) record.getThreadID());
 				pStmtInsert.setString(8, this.hostname);
 				pStmtInsert.setString(9, record.getLevel().getName());
-				
-				if(record.getThrown() != null) {
+
+				if (record.getThrown() != null) {
 					StringWriter sw = new StringWriter();
 					record.getThrown().printStackTrace(new PrintWriter(sw));
 					pStmtInsert.setString(10, sw.toString());
-				}
-				else {
+				} else {
 					pStmtInsert.setString(10, null);
 				}
-		    	
+
 				pStmtInsert.executeUpdate();
 				return; // don't retry
 
 			} catch (SQLException e) {
-                                System.err.println(new Date().toString() + " " + this.getClass().getName());
-				System.err.println("Failed to log to database! Will retry another " + retries + " times. Error: " + e.toString());
+				System.err.println(new Date().toString() + " " + this.getClass().getName());
+				System.err.println(
+						"Failed to log to database! Will retry another " + retries + " times. Error: " + e.toString());
 				try {
 					Thread.sleep(1000);
 					this.connect();
