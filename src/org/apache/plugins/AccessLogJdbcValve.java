@@ -22,6 +22,8 @@ import org.apache.catalina.valves.AccessLogValve;
  */
 public class AccessLogJdbcValve extends AccessLogValve {
 
+	private final boolean DEBUG = false;
+
 	private String dbUrl;
 	private String driver;
 	private String user;
@@ -30,13 +32,14 @@ public class AccessLogJdbcValve extends AccessLogValve {
 	private Connection connection;
 	private PreparedStatement statement;
 	private String sqlStatement = "insert into log_access (server_ts,remote_ip,local_ip,method,url,query_string,protocol,http_status,bytes_sent,referer,user_agent,req_time,session_id,user_id,agent_proxy,rsp_time,thread_name) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+	private String pattern = "%{y-M-d H:m:s.S}t%a%A%m%U%q%H%s%B%{Referer}i%{User-Agent}i%T%S%{user_id}s%{agent_proxy}s%F%I";
 	
 	public AccessLogJdbcValve() {
 		try {
 			
 			Properties p = new Properties();
 			String path = System.getProperty("ctc.config.path");
-			URL propertiesUrl = new URL(path + "/database.properties");
+			URL propertiesUrl = new URL(path + "/tomcat_db_logging.properties");
 			InputStream is = propertiesUrl.openStream();
 			p.load(is);
 			is.close();
@@ -52,7 +55,7 @@ public class AccessLogJdbcValve extends AccessLogValve {
 			System.out.println(new Date() + " " + this.getClass().getName() + " Connected to database " + dbUrl);
 
 		} catch (IOException | SQLException | ClassNotFoundException e) {
-			System.err.println("something wrong with configuration properties");
+			System.err.println(new Date() + ": something wrong with configuration properties");
 			e.printStackTrace(System.err);
 			System.exit(-1);
 		}
@@ -78,21 +81,31 @@ public class AccessLogJdbcValve extends AccessLogValve {
         
         Date date = new Date();
 
+
 		int retries = 3;
 
 		while (--retries >= 0) {
 
 			try {
 				
+				int n = 0;
+				statement.clearParameters();
+
 				for (int i = 0; i < logElements.length; i++) {
 
 					if(logElements[i] instanceof StringElement) 
-						throw new IllegalArgumentException();
+						// ignore extraneous elements introduced by the pattern parser
+						continue;
 
 					StringBuilder result = new StringBuilder(128);
 					logElements[i].addElement(result, date, request, response, time);
 					
-					statement.setString(i+1, result.toString());
+					if(DEBUG) System.err.println("set n=" + n + " to " + result.toString());
+
+					String value = result.toString();
+					if("-".equals(value))
+						value = null;
+					statement.setString(++n, value);
 				}
 				if(statement.executeUpdate() != 1) {
 					throw new SQLException("not inserted 1 row");
@@ -101,13 +114,13 @@ public class AccessLogJdbcValve extends AccessLogValve {
 				
 			} catch (SQLException e) {
 				
-				System.err.println("Failed to log to database! Will retry another " + retries + " times. Error: " + e.toString());
+				System.err.println(new Date() + ": Failed to log to database! Will retry another " + retries + " times. Error: " + e.toString());
 				try {
 					Thread.sleep(1000);
 					this.connect();
-					System.err.println("Reconnect OK");
+					System.err.println(new Date() + ": Reconnect OK");
 				} catch (InterruptedException | SQLException blah) {
-					System.err.println("Reconnect FAILED");
+					System.err.println(new Date() + ": Reconnect FAILED");
 				}
 			}
 		}
@@ -118,4 +131,18 @@ public class AccessLogJdbcValve extends AccessLogValve {
     	this.sqlStatement = statement;
     }
 
+    @Override
+    protected synchronized void open() {
+    	// do nothing
+    }
+
+    @Override
+    public void setPattern(String ignore) {
+	assert(ignore.equals("default"));
+    	if(DEBUG) System.err.println(new Date() + ": Pattern = " + pattern);
+	super.setPattern(pattern);
+	if(DEBUG) for (int i = 0; i < logElements.length; i++) {
+		System.err.printf("[%d] = %s\n", i, logElements[i].getClass().getName());
+	}	
+    }
 }

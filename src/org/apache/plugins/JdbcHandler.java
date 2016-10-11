@@ -37,7 +37,7 @@ public class JdbcHandler extends Handler {
 
 			Properties p = new Properties();
 			String path = System.getProperty("ctc.config.path");
-			URL propertiesUrl = new URL(path + "/database.properties");
+			URL propertiesUrl = new URL(path + "/tomcat_db_logging.properties");
 			InputStream is = propertiesUrl.openStream();
 			p.load(is);
 			is.close();
