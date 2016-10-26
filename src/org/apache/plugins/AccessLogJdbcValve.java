@@ -105,10 +105,11 @@ public class AccessLogJdbcValve extends AccessLogValve {
 					if ("-".equals(value)) {
 						value = null;
 					}
-					statement.setString(n, value);
-					debug.append("Called setString(" + n + ", [" + value + "])\n");
 					
 					++n;
+
+					statement.setString(n, value);
+					debug.append("Called setString(" + n + ", [" + value + "])\n");					
 				}
 				if (statement.executeUpdate() != 1) {
 					throw new SQLException("not inserted 1 row");
