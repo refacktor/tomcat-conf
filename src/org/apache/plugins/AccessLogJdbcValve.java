@@ -15,26 +15,22 @@ import org.apache.catalina.connector.Response;
 import org.apache.catalina.valves.AccessLogValve;
 
 /**
- * Minimalistic JDBC log handler plugin (Valve) for Tomcat Access Logs. Uses
- * standard message formatter to generate SQL, without prepared statements,
- * which is slower but simpler and more flexible than
- * org.apache.catalina.valves.JDBCAccessLogValve.
+ * Minimalistic JDBC log handler plugin (Valve) for Tomcat Access Logs. 
+ * Serves same purpose as org.apache.catalina.valves.JDBCAccessLogValve.
  * 
  */
 public class AccessLogJdbcValve extends AccessLogValve {
 
 	private final boolean DEBUG = false;
 
-	private String dbUrl;
-	private String driver;
-	private String user;
-	private String password;
+	private final String dbUrl;
+	private final String driver;
+	private final String user;
+	private final String password;
 
-	private Connection connection;
-	private PreparedStatement statement;
-	private String sqlStatement = "insert into log_access (server_ts,remote_ip,local_ip,method,url,query_string,protocol,http_status,bytes_sent,referer,user_agent,time_elapsed,session_id,user_id,agent_proxy,time_to_first_byte,thread_name) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-	private String pattern = "%{y-M-d H:m:s.S}t%a%A%m%U%q%H%s%B%{Referer}i%{User-Agent}i%D%S%{user_id}s%{agent_proxy}s%F%I";
-
+	private final String sqlStatement = "insert into log_access (server_ts,remote_ip,local_ip,method,url,query_string,protocol,http_status,bytes_sent,referer,user_agent,time_elapsed,session_id,user_id,agent_proxy,time_to_first_byte,thread_name) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+	private final String pattern = "%{y-M-d H:m:s.S}t%a%A%m%U%q%H%s%B%{Referer}i%{User-Agent}i%D%S%{user_id}s%{agent_proxy}s%F%I";
+	
 	public AccessLogJdbcValve() {
 		try {
 
@@ -45,13 +41,16 @@ public class AccessLogJdbcValve extends AccessLogValve {
 			p.load(is);
 			is.close();
 
-			dbUrl = p.getProperty("database.url");
-			driver = p.getProperty("database.driver.classname");
-			user = p.getProperty("database.username");
-			password = p.getProperty("database.password");
+			this.dbUrl = p.getProperty("database.url");
+			this.driver = p.getProperty("database.driver.classname");
+			this.user = p.getProperty("database.username");
+			this.password = p.getProperty("database.password");
 
 			Class.forName(driver);
-			this.connect();
+
+			try(Connection test = DriverManager.getConnection(dbUrl, user, password)) {
+				//empty;
+			}
 
 			System.out.println(new Date() + " " + this.getClass().getName() + " Connected to database " + dbUrl);
 
@@ -59,12 +58,8 @@ public class AccessLogJdbcValve extends AccessLogValve {
 			System.err.println(new Date() + ": something wrong with configuration properties");
 			e.printStackTrace(System.err);
 			System.exit(-1);
+			throw new RuntimeException(e);
 		}
-	}
-
-	private void connect() throws SQLException {
-		connection = DriverManager.getConnection(dbUrl, user, password);
-		statement = connection.prepareStatement(sqlStatement);
 	}
 
 	@Override
@@ -88,9 +83,9 @@ public class AccessLogJdbcValve extends AccessLogValve {
 			StringBuilder debug = new StringBuilder();
 			int n = 0;
 
-			try {
-				statement.clearParameters();
-
+			try(Connection connection = DriverManager.getConnection(dbUrl, user, password);
+				PreparedStatement statement = connection.prepareStatement(sqlStatement)) {
+				
 				for (int i = 0; i < logElements.length; i++) {
 
 					if (logElements[i] instanceof StringElement)
@@ -121,20 +116,11 @@ public class AccessLogJdbcValve extends AccessLogValve {
 				System.err.println(new Date() + " " + this.getClass().getName()
 						+ ": Failed to log to database! Will retry another " + retries + " times. Error: "
 						+ e.toString() + " debug={" + debug.toString() + "}");
-				try {
-					Thread.sleep(1000);
-					this.connect();
-					System.err.println(new Date() + ": Reconnect OK");
-				} catch (InterruptedException | SQLException blah) {
-					System.err.println(new Date() + ": Reconnect FAILED");
-				}
+				
+				e.printStackTrace(System.err);
 			}
 		}
 
-	}
-
-	public void setStatement(String statement) {
-		this.sqlStatement = statement;
 	}
 
 	@Override
