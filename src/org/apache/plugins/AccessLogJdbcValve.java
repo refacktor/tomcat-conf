@@ -15,9 +15,10 @@ import org.apache.catalina.connector.Response;
 import org.apache.catalina.valves.AccessLogValve;
 
 /**
- * Minimalistic JDBC log handler plugin (Valve) for Tomcat Access Logs.
- * Uses standard message formatter to generate SQL, without prepared statements, 
- * which is slower but simpler and more flexible than org.apache.catalina.valves.JDBCAccessLogValve.
+ * Minimalistic JDBC log handler plugin (Valve) for Tomcat Access Logs. Uses
+ * standard message formatter to generate SQL, without prepared statements,
+ * which is slower but simpler and more flexible than
+ * org.apache.catalina.valves.JDBCAccessLogValve.
  * 
  */
 public class AccessLogJdbcValve extends AccessLogValve {
@@ -33,10 +34,10 @@ public class AccessLogJdbcValve extends AccessLogValve {
 	private PreparedStatement statement;
 	private String sqlStatement = "insert into log_access (server_ts,remote_ip,local_ip,method,url,query_string,protocol,http_status,bytes_sent,referer,user_agent,time_elapsed,session_id,user_id,agent_proxy,time_to_first_byte,thread_name) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 	private String pattern = "%{y-M-d H:m:s.S}t%a%A%m%U%q%H%s%B%{Referer}i%{User-Agent}i%D%S%{user_id}s%{agent_proxy}s%F%I";
-	
+
 	public AccessLogJdbcValve() {
 		try {
-			
+
 			Properties p = new Properties();
 			String path = System.getProperty("ctc.config.path");
 			URL propertiesUrl = new URL(path + "/tomcat_db_logging.properties");
@@ -51,7 +52,7 @@ public class AccessLogJdbcValve extends AccessLogValve {
 
 			Class.forName(driver);
 			this.connect();
-			
+
 			System.out.println(new Date() + " " + this.getClass().getName() + " Connected to database " + dbUrl);
 
 		} catch (IOException | SQLException | ClassNotFoundException e) {
@@ -70,54 +71,55 @@ public class AccessLogJdbcValve extends AccessLogValve {
 	public void log(String nothing) {
 		throw new UnsupportedOperationException();
 	}
-	
-    @Override
-    public void log(Request request, Response response, long time) {
-        if (!getState().isAvailable() || !getEnabled() ||
-                logElements == null || condition != null
-                && null != request.getRequest().getAttribute(condition)) {
-            return;
-        }
-        
-        Date date = new Date();
 
+	@Override
+	public void log(Request request, Response response, long time) {
+		if (!getState().isAvailable() || !getEnabled() || logElements == null
+				|| condition != null && null != request.getRequest().getAttribute(condition)) {
+			return;
+		}
+
+		Date date = new Date();
 
 		int retries = 3;
 
 		while (--retries >= 0) {
 
 			StringBuilder debug = new StringBuilder();
+			int n = 0;
 
 			try {
-				
-				int n = 0;
 				statement.clearParameters();
 
 				for (int i = 0; i < logElements.length; i++) {
 
-					if(logElements[i] instanceof StringElement) 
-						// ignore extraneous elements introduced by the pattern parser
+					if (logElements[i] instanceof StringElement)
+						// ignore extraneous elements introduced by the pattern
+						// parser
 						continue;
 
 					StringBuilder result = new StringBuilder(128);
 					logElements[i].addElement(result, date, request, response, time);
-					
-					debug.append("set n=" + n + " to " + result.toString() + "\n");
 
 					String value = result.toString();
-					if("-".equals(value))
+					if ("-".equals(value)) {
 						value = null;
-					statement.setString(++n, value);
+					}
+					statement.setString(n, value);
+					debug.append("Called setString(" + n + ", [" + value + "])\n");
+					
+					++n;
 				}
-				if(statement.executeUpdate() != 1) {
+				if (statement.executeUpdate() != 1) {
 					throw new SQLException("not inserted 1 row");
 				}
 				return;
-				
+
 			} catch (SQLException e) {
-				
-				System.err.println(new Date() + " " + this.getClass().getName() + ": Failed to log to database! Will retry another " + retries + " times. Error: " + e.toString()
-						+ " debug={" + debug.toString() + "}");
+
+				System.err.println(new Date() + " " + this.getClass().getName()
+						+ ": Failed to log to database! Will retry another " + retries + " times. Error: "
+						+ e.toString() + " debug={" + debug.toString() + "}");
 				try {
 					Thread.sleep(1000);
 					this.connect();
@@ -128,24 +130,26 @@ public class AccessLogJdbcValve extends AccessLogValve {
 			}
 		}
 
-    }
-    
-    public void setStatement(String statement) {
-    	this.sqlStatement = statement;
-    }
+	}
 
-    @Override
-    protected synchronized void open() {
-    	// do nothing
-    }
+	public void setStatement(String statement) {
+		this.sqlStatement = statement;
+	}
 
-    @Override
-    public void setPattern(String ignore) {
-	assert(ignore.equals("default"));
-    	if(DEBUG) System.err.println(new Date() + ": Pattern = " + pattern);
-	super.setPattern(pattern);
-	if(DEBUG) for (int i = 0; i < logElements.length; i++) {
-		System.err.printf("[%d] = %s\n", i, logElements[i].getClass().getName());
-	}	
-    }
+	@Override
+	protected synchronized void open() {
+		// do nothing
+	}
+
+	@Override
+	public void setPattern(String ignore) {
+		assert (ignore.equals("default"));
+		if (DEBUG)
+			System.err.println(new Date() + ": Pattern = " + pattern);
+		super.setPattern(pattern);
+		if (DEBUG)
+			for (int i = 0; i < logElements.length; i++) {
+				System.err.printf("[%d] = %s\n", i, logElements[i].getClass().getName());
+			}
+	}
 }
