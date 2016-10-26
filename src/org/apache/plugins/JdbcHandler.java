@@ -21,13 +21,12 @@ import java.util.logging.LogRecord;
  */
 public class JdbcHandler extends Handler {
 
+	private static final String SQL = "INSERT INTO log_application(dbTimeStamp,millis,loggerName,message,sequenceNumber,"
+			+ "sourceClassName,sourceMethodName,threadID,hostname,level,thrown) VALUES (NOW(),?,?,?,?,?,?,?,?,?,?)";
 	private String dbUrl;
 	private String driver;
 	private String user;
 	private String password;
-
-	private Connection connection;
-	private PreparedStatement pStmtInsert;
 
 	private String hostname;
 
@@ -48,7 +47,10 @@ public class JdbcHandler extends Handler {
 			password = p.getProperty("database.password");
 
 			Class.forName(driver);
-			this.connect();
+			
+			try(Connection test = DriverManager.getConnection(dbUrl, user, password)) {
+				// empty
+			}
 			
 			LogRecord lr = new LogRecord(Level.CONFIG, "JdbcHandler connected successfully");
 			lr.setLoggerName(this.getClass().getName());
@@ -65,14 +67,6 @@ public class JdbcHandler extends Handler {
 		}
 	}
 
-	private void connect() throws SQLException {
-		connection = DriverManager.getConnection(dbUrl, user, password);
-
-		pStmtInsert = connection
-				.prepareStatement("INSERT INTO log_application(dbTimeStamp,millis,loggerName,message,sequenceNumber,"
-						+ "sourceClassName,sourceMethodName,threadID,hostname,level,thrown) VALUES (NOW(),?,?,?,?,?,?,?,?,?,?)");
-	}
-
 	@Override
 	public void publish(LogRecord record) {
 
@@ -82,7 +76,9 @@ public class JdbcHandler extends Handler {
 		int retries = 3;
 
 		while (--retries >= 0) {
-			try {
+			try(Connection conn = DriverManager.getConnection(dbUrl, user, password);
+				PreparedStatement pStmtInsert = conn.prepareCall(SQL)) {
+				
 				pStmtInsert.setLong(1, record.getMillis());
 				pStmtInsert.setString(2, record.getLoggerName());
 				pStmtInsert.setString(3, record.getMessage());
@@ -107,23 +103,13 @@ public class JdbcHandler extends Handler {
 			} catch (SQLException e) {
 				System.err.println(new Date().toString() + " " + this.getClass().getName() +
 						": Failed to log to database! Will retry another " + retries + " times. Error: " + e.toString());
-				try {
-					Thread.sleep(1000);
-					this.connect();
-					System.err.println("Reconnect OK");
-				} catch (InterruptedException | SQLException blah) {
-					System.err.println("Reconnect FAILED");
-				}
+				e.printStackTrace(System.err);
 			}
 		}
 	}
 
 	@Override
 	public void close() {
-		try {
-			connection.close();
-		} catch (SQLException blah) {
-		}
 	}
 
 	@Override
