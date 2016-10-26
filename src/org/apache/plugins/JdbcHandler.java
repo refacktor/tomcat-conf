@@ -105,9 +105,8 @@ public class JdbcHandler extends Handler {
 				return; // don't retry
 
 			} catch (SQLException e) {
-				System.err.println(new Date().toString() + " " + this.getClass().getName());
-				System.err.println(
-						"Failed to log to database! Will retry another " + retries + " times. Error: " + e.toString());
+				System.err.println(new Date().toString() + " " + this.getClass().getName() +
+						": Failed to log to database! Will retry another " + retries + " times. Error: " + e.toString());
 				try {
 					Thread.sleep(1000);
 					this.connect();

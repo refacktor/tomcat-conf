@@ -86,6 +86,8 @@ public class AccessLogJdbcValve extends AccessLogValve {
 
 		while (--retries >= 0) {
 
+			StringBuilder debug = new StringBuilder();
+
 			try {
 				
 				int n = 0;
@@ -100,7 +102,7 @@ public class AccessLogJdbcValve extends AccessLogValve {
 					StringBuilder result = new StringBuilder(128);
 					logElements[i].addElement(result, date, request, response, time);
 					
-					if(DEBUG) System.err.println("set n=" + n + " to " + result.toString());
+					debug.append("set n=" + n + " to " + result.toString() + "\n");
 
 					String value = result.toString();
 					if("-".equals(value))
@@ -114,7 +116,8 @@ public class AccessLogJdbcValve extends AccessLogValve {
 				
 			} catch (SQLException e) {
 				
-				System.err.println(new Date() + ": Failed to log to database! Will retry another " + retries + " times. Error: " + e.toString());
+				System.err.println(new Date() + " " + this.getClass().getName() + ": Failed to log to database! Will retry another " + retries + " times. Error: " + e.toString()
+						+ " debug={" + debug.toString() + "}");
 				try {
 					Thread.sleep(1000);
 					this.connect();
