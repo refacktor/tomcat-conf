@@ -61,9 +61,8 @@ public class JdbcHandler extends Handler {
 			System.out.println(new Date() + " " + this.getClass().getName() + " Connected to database " + dbUrl);
 
 		} catch (IOException | SQLException | ClassNotFoundException e) {
-			System.err.println("something wrong with configuration properties");
+			System.err.println(new Date() + " " + this.getClass().getName() + " FAILED TO CONNECT TO DATABASE " + dbUrl);
 			e.printStackTrace(System.err);
-			System.exit(-1);
 		}
 	}
 

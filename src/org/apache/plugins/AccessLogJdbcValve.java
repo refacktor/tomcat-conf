@@ -23,13 +23,13 @@ public class AccessLogJdbcValve extends AccessLogValve {
 
 	private final boolean DEBUG = false;
 
-	private final String dbUrl;
-	private final String driver;
-	private final String user;
-	private final String password;
+	private String dbUrl = null;
+	private String driver;
+	private String user;
+	private String password;
 
-	private final String sqlStatement = "insert into log_access (server_ts,remote_ip,local_ip,method,url,query_string,protocol,http_status,bytes_sent,referer,user_agent,time_elapsed,session_id,user_id,agent_proxy,time_to_first_byte,thread_name) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-	private final String pattern = "%{y-M-d H:m:s.S}t%a%A%m%U%q%H%s%B%{Referer}i%{User-Agent}i%D%S%{user_id}s%{agent_proxy}s%F%I";
+	private String sqlStatement = "insert into log_access (server_ts,remote_ip,local_ip,method,url,query_string,protocol,http_status,bytes_sent,referer,user_agent,time_elapsed,session_id,user_id,agent_proxy,time_to_first_byte,thread_name) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+	private String pattern = "%{y-M-d H:m:s.S}t%a%A%m%U%q%H%s%B%{Referer}i%{User-Agent}i%D%S%{user_id}s%{agent_proxy}s%F%I";
 	
 	public AccessLogJdbcValve() {
 		try {
@@ -55,10 +55,8 @@ public class AccessLogJdbcValve extends AccessLogValve {
 			System.out.println(new Date() + " " + this.getClass().getName() + " Connected to database " + dbUrl);
 
 		} catch (IOException | SQLException | ClassNotFoundException e) {
-			System.err.println(new Date() + ": something wrong with configuration properties");
+			System.err.println(new Date() + " " + this.getClass().getName() + " FAILED TO CONNECT TO DATABASE " + dbUrl);
 			e.printStackTrace(System.err);
-			System.exit(-1);
-			throw new RuntimeException(e);
 		}
 	}
 
