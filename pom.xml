@@ -4,36 +4,10 @@
 	<groupId>tomcat7-conf</groupId>
 	<artifactId>tomcat7-conf</artifactId>
 	<version>1.0-RELEASE</version>
-	<packaging>jar</packaging>
+	<packaging>pom</packaging>
 
-	<dependencies>
-		<dependency>
-			<groupId>org.apache.tomcat.maven</groupId>
-			<artifactId>common-tomcat-maven-plugin</artifactId>
-			<version>2.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.tomcat</groupId>
-			<artifactId>tomcat-catalina</artifactId>
-			<version>7.0.12</version>
-		</dependency>
-	</dependencies>
-
-	<build>
-		<sourceDirectory>src</sourceDirectory>
-		<plugins>
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.3</version>
-				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
-	
 	<modules>
 		<module>cloudwatch</module>
+		<module>jdbc</module>
 	</modules>
 </project>
