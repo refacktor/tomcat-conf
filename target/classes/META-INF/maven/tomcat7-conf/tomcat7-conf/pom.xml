@@ -32,4 +32,8 @@
 			</plugin>
 		</plugins>
 	</build>
+	
+	<modules>
+		<module>cloudwatch</module>
+	</modules>
 </project>
