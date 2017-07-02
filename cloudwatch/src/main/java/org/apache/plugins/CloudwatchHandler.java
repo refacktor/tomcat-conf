@@ -23,7 +23,7 @@ import java.util.logging.SimpleFormatter;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.logs.AWSLogsClient;
@@ -256,8 +256,8 @@ public class CloudwatchHandler extends Handler {
 			this.awsLogsClient.setRegion(Region.getRegion(Regions.fromName(p.getProperty("region"))));
 		}
 		else {
-			System.out.println("Reading AWS credentials from environment");
-			this.awsLogsClient = new AWSLogsClient(new EnvironmentVariableCredentialsProvider());
+			System.out.println("Reading AWS credentials from instance profile");
+			this.awsLogsClient = new AWSLogsClient(new InstanceProfileCredentialsProvider());
 			this.awsLogsClient.setRegion(Regions.getCurrentRegion());
 		}
 	}
