@@ -20,6 +20,11 @@
 			<artifactId>aws-java-sdk-logs</artifactId>
 			<version>1.11.62</version>
 		</dependency>
+		<dependency>
+			<groupId>org.testng</groupId>
+			<artifactId>testng</artifactId>
+			<version>6.8.8</version>
+		</dependency>
 	</dependencies>
 
 	<build>
