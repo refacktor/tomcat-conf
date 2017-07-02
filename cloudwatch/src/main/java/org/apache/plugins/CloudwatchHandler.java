@@ -2,13 +2,15 @@ package org.apache.plugins;
 
 import static java.util.stream.Collectors.toList;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.InetAddress;
-import java.net.URLEncoder;
-import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -19,6 +21,8 @@ import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 import java.util.logging.SimpleFormatter;
 
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
 import com.amazonaws.services.logs.AWSLogsClient;
 import com.amazonaws.services.logs.model.CreateLogGroupRequest;
@@ -79,9 +83,9 @@ public class CloudwatchHandler extends Handler {
 		super();
 		try {
 			logGroupName = "/tomcat/" + InetAddress.getLocalHost().getHostName();
-			logStreamName = URLEncoder.encode(Instant.now().toString());
+			logStreamName = Instant.now().toString().replace(':', '.');
 			init();
-		} catch (UnknownHostException e) {
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -197,13 +201,13 @@ public class CloudwatchHandler extends Handler {
 		}
 	}
 
-	public synchronized void init() {
+	public synchronized void init() throws IOException {
 		if (isBlank(logGroupName) || isBlank(logStreamName)) {
 			System.out.println("Could not initialise CloudwatchAppender because either or both LogGroupName("
 					+ logGroupName + ") and LogStreamName(" + logStreamName + ") are null or empty");
 			this.close();
 		} else {
-			this.awsLogsClient = new AWSLogsClient(new EnvironmentVariableCredentialsProvider());
+			this.awsLogsClient = new AWSLogsClient(findCredentials());
 			loggingEventsQueue = new LinkedBlockingQueue<>(queueLength);
 			try {
 				initializeCloudwatchResources();
@@ -216,6 +220,39 @@ public class CloudwatchHandler extends Handler {
 			}
 			System.err.println("Initialized CloudwatchAppender with LogGroupName(" + logGroupName
 					+ ") and LogStreamName(" + logStreamName + ")");
+		}
+	}
+
+	public AWSCredentialsProvider findCredentials() throws IOException {
+		File cliCreds = new File(System.getProperty("HOME") + "/.aws/config");
+		if(cliCreds.exists()) {
+			Properties p = new Properties();
+			try(FileInputStream fis = new FileInputStream(cliCreds)) {
+				p.load(fis);
+			}
+			return new AWSCredentialsProvider() {
+				@Override
+				public void refresh() {
+				}
+				@Override
+				public AWSCredentials getCredentials() {
+					return new AWSCredentials() {
+						@Override
+						public String getAWSSecretKey() {
+							return p.getProperty("aws_secret_access_key");
+						}
+						
+						@Override
+						public String getAWSAccessKeyId() {
+							return p.getProperty("aws_access_key_id");
+						}
+					};
+				}
+			};
+			
+		}
+		else {
+			return new EnvironmentVariableCredentialsProvider();
 		}
 	}
 
