@@ -24,6 +24,8 @@ import java.util.logging.SimpleFormatter;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.logs.AWSLogsClient;
 import com.amazonaws.services.logs.model.CreateLogGroupRequest;
 import com.amazonaws.services.logs.model.CreateLogStreamRequest;
@@ -207,7 +209,7 @@ public class CloudwatchHandler extends Handler {
 					+ logGroupName + ") and LogStreamName(" + logStreamName + ") are null or empty");
 			this.close();
 		} else {
-			this.awsLogsClient = new AWSLogsClient(findCredentials());
+			initializeClient();
 			loggingEventsQueue = new LinkedBlockingQueue<>(queueLength);
 			try {
 				initializeCloudwatchResources();
@@ -223,7 +225,7 @@ public class CloudwatchHandler extends Handler {
 		}
 	}
 
-	public AWSCredentialsProvider findCredentials() throws IOException {
+	public void initializeClient() throws IOException {
 		File cliCreds = new File(System.getenv("HOME") + "/.aws/config");
 		if(cliCreds.exists()) {
 			System.out.println("Reading credentials from " + cliCreds.getAbsolutePath());
@@ -231,7 +233,7 @@ public class CloudwatchHandler extends Handler {
 			try(FileInputStream fis = new FileInputStream(cliCreds)) {
 				p.load(fis);
 			}
-			return new AWSCredentialsProvider() {
+			this.awsLogsClient = new AWSLogsClient(new AWSCredentialsProvider() {
 				@Override
 				public void refresh() {
 				}
@@ -249,12 +251,14 @@ public class CloudwatchHandler extends Handler {
 						}
 					};
 				}
-			};
+			});
 			
+			this.awsLogsClient.setRegion(Region.getRegion(Regions.fromName(p.getProperty("region"))));
 		}
 		else {
 			System.out.println("Reading AWS credentials from environment");
-			return new EnvironmentVariableCredentialsProvider();
+			this.awsLogsClient = new AWSLogsClient(new EnvironmentVariableCredentialsProvider());
+			this.awsLogsClient.setRegion(Regions.getCurrentRegion());
 		}
 	}
 
