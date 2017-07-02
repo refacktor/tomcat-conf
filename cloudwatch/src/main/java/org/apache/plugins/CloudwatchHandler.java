@@ -224,7 +224,7 @@ public class CloudwatchHandler extends Handler {
 	}
 
 	public AWSCredentialsProvider findCredentials() throws IOException {
-		File cliCreds = new File(System.getProperty("HOME") + "/.aws/config");
+		File cliCreds = new File(System.getenv("HOME") + "/.aws/config");
 		if(cliCreds.exists()) {
 			System.out.println("Reading credentials from " + cliCreds.getAbsolutePath());
 			Properties p = new Properties();
