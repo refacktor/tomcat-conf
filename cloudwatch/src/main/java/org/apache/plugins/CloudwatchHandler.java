@@ -161,11 +161,11 @@ public class CloudwatchHandler extends Handler {
 
 	private void initCloudwatchDaemon() {
 		exe = new ScheduledThreadPoolExecutor(1);
-		exe.schedule(() -> {
+		exe.scheduleAtFixedRate(() -> {
 			if (loggingEventsQueue.size() > 0) {
 				sendMessages();
 			}
-		}, 1, TimeUnit.SECONDS);
+		}, 0, 1, TimeUnit.SECONDS);
 	}
 
 	private void initializeCloudwatchResources() {
