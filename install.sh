@@ -1,6 +1,9 @@
-rm -f /usr/share/tomcat7/lib/tomcat7-conf-1.0-RELEASE.jar # old name
-cp jdbc/target/jdbc-1.0-RELEASE.jar /usr/share/tomcat7/lib/
-cp cloudwatch/target/shaded.jar /usr/share/tomcat7/lib/cloudwatch-shaded.jar
+#!/bin/bash
+
+rm -fv /usr/share/tomcat7/lib/{tomcat7-conf-1.0-RELEASE,jdbc-handler-*,cloudwatch-handler-*}.jar
+
+cp -v jdbc-handler/target/jdbc-handler-*.jar /usr/share/tomcat7/lib/
+cp -v cloudwatch-handler/target/cloudwatch-handler-*-shaded.jar /usr/share/tomcat7/lib/
 
 for i in /usr/share/tomcat7/lib/*.jar
 do

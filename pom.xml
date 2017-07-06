@@ -3,11 +3,11 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>tomcat7-conf</groupId>
 	<artifactId>tomcat7-conf</artifactId>
-	<version>1.0-RELEASE</version>
+	<version>2.0.0</version>
 	<packaging>pom</packaging>
 
 	<modules>
-		<module>cloudwatch</module>
-		<module>jdbc</module>
+		<module>cloudwatch-handler</module>
+		<module>jdbc-handler</module>
 	</modules>
 </project>
