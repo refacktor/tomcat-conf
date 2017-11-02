@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -132,9 +133,15 @@ public class CloudwatchHandler extends Handler {
 					&& loggingEvents.size() <= messagesBatchSize) {
 				loggingEvents.add(polledLoggingEvent);
 			}
-			List<InputLogEvent> inputLogEvents = loggingEvents.stream().map(loggingEvent -> new InputLogEvent()
-					.withTimestamp(loggingEvent.getMillis()).withMessage(formatter.format(loggingEvent)))
+			
+			List<InputLogEvent> inputLogEvents = loggingEvents
+					.stream()
+					.sorted(Comparator.comparing(LogRecord::getMillis))
+					.map(loggingEvent -> new InputLogEvent()
+							.withTimestamp(loggingEvent.getMillis())
+							.withMessage(formatter.format(loggingEvent)))					
 					.collect(toList());
+			
 			if (!loggingEvents.isEmpty()) {
 				PutLogEventsRequest putLogEventsRequest = new PutLogEventsRequest(logGroupName, logStreamName,
 						inputLogEvents);
