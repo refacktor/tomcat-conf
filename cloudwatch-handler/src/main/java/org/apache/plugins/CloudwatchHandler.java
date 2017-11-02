@@ -265,7 +265,12 @@ public class CloudwatchHandler extends Handler {
 		else {
 			System.out.println("Reading AWS credentials from instance profile");
 			this.awsLogsClient = new AWSLogsClient(new InstanceProfileCredentialsProvider());
-			this.awsLogsClient.setRegion(Regions.getCurrentRegion());
+			
+			Region currentRegion = Regions.getCurrentRegion();
+			if(currentRegion == null) {
+				currentRegion = Region.getRegion(Regions.US_WEST_1);
+			}
+			this.awsLogsClient.setRegion(currentRegion);
 		}
 	}
 
