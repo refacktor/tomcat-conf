@@ -16,6 +16,7 @@
 
       <Host name="localhost"  appBase="webapps" unpackWARs="true" autoDeploy="true">
         <Valve className="org.apache.plugins.AccessLogJdbcValve" pattern="default"/>
+        <Valve className="org.apache.plugins.AccessLogJdkValve" pattern="rip=%a lip=%A Ref=&quot;%{Referer}i&quot; UA=&quot;%{User-Agent}i&quot; session=%S uid=%{user_id}s apx=%{agent_proxy}s ttfb=%F t=%D b=%B th=%I %H %m %s %U%q"/>
       </Host>
 
     </Engine>
