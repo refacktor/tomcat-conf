@@ -7,8 +7,11 @@
   version="3.0">
 
     <session-config>
-        <session-timeout>2880</session-timeout>
+        <session-timeout>525600</session-timeout>
         <tracking-mode>COOKIE</tracking-mode>
+	<cookie-config>
+	   <max-age>31536000</max-age>
+	</cookie-config>
     </session-config>
 
     <mime-mapping> <extension>js</extension> <mime-type>application/javascript</mime-type> </mime-mapping>
