@@ -28,8 +28,8 @@ public class AccessLogJdbcValve extends AccessLogValve {
 	private String user;
 	private String password;
 
-	private String sqlStatement = "insert into log_access (server_ts,remote_ip,local_ip,method,url,query_string,protocol,http_status,bytes_sent,referer,user_agent,time_elapsed,session_id,user_id,agent_proxy,time_to_first_byte,thread_name) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-	private String pattern = "%{y-M-d H:m:s.S}t%a%A%m%U%q%H%s%B%{Referer}i%{User-Agent}i%D%S%{user_id}s%{agent_proxy}s%F%I";
+	private String sqlStatement = "insert into log_access (server_ts,remote_ip,local_ip,method,url,query_string,protocol,http_status,bytes_sent,referer,user_agent,time_elapsed,session_id,user_id,agent_proxy,agent_id,time_to_first_byte,thread_name) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+	private String pattern = "%{y-M-d H:m:s.S}t%a%A%m%U%q%H%s%B%{Referer}i%{User-Agent}i%D%S%{user_id}s%{agent_proxy}s%{agend_device_id}c%F%I";
 	
 	public AccessLogJdbcValve() {
 		try {
