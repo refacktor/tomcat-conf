@@ -190,7 +190,7 @@ public class CloudwatchHandler extends Handler {
 				.getLogStreams().stream().filter(logStream -> logStream.getLogStreamName().equals(logStreamName))
 				.findFirst();
 		if (!logStreamOptional.isPresent()) {
-			System.out.println("About to create LogStream: " + logStreamName + "in LogGroup: " + logGroupName);
+			System.out.println("About to create LogStream: " + logStreamName + " in LogGroup: " + logGroupName);
 			CreateLogStreamRequest createLogStreamRequest = new CreateLogStreamRequest().withLogGroupName(logGroupName)
 					.withLogStreamName(logStreamName);
 			awsLogsClient.createLogStream(createLogStreamRequest);

@@ -1,5 +1,6 @@
 package org.apache.plugins;
 
+import java.io.CharArrayWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -61,7 +62,7 @@ public class AccessLogJdbcValve extends AccessLogValve {
 	}
 
 	@Override
-	public void log(String nothing) {
+	public void log(CharArrayWriter nothing) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -91,7 +92,7 @@ public class AccessLogJdbcValve extends AccessLogValve {
 						// parser
 						continue;
 
-					StringBuilder result = new StringBuilder(128);
+					CharArrayWriter result = new CharArrayWriter(128);
 					logElements[i].addElement(result, date, request, response, time);
 
 					String value = result.toString();
