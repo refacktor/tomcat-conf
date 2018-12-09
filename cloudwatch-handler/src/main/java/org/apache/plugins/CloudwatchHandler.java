@@ -28,30 +28,26 @@ import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.logs.AWSLogsClient;
-import com.amazonaws.services.logs.model.CreateLogGroupRequest;
-import com.amazonaws.services.logs.model.CreateLogStreamRequest;
-import com.amazonaws.services.logs.model.DescribeLogGroupsRequest;
-import com.amazonaws.services.logs.model.DescribeLogStreamsRequest;
-import com.amazonaws.services.logs.model.InputLogEvent;
-import com.amazonaws.services.logs.model.InvalidSequenceTokenException;
-import com.amazonaws.services.logs.model.LogGroup;
-import com.amazonaws.services.logs.model.LogStream;
-import com.amazonaws.services.logs.model.PutLogEventsRequest;
-import com.amazonaws.services.logs.model.PutLogEventsResult;
+import com.amazonaws.services.logs.model.*;
 
 public class CloudwatchHandler extends Handler {
 
 	private final Boolean DEBUG_MODE = true;
 
 	/**
+	 * The queue / buffer size
+	 */
+	private int queueLength = 1024;
+
+	/**
 	 * The queue used to buffer log entries
 	 */
-	private LinkedBlockingQueue<LogRecord> loggingEventsQueue;
+	private LinkedBlockingQueue<LogRecord> loggingEventsQueue = new LinkedBlockingQueue<>(queueLength);
 
 	/**
 	 * the AWS Cloudwatch Logs API client
 	 */
-	private AWSLogsClient awsLogsClient;
+	protected AWSLogsClient awsLogsClient;
 
 	private Formatter formatter = new SimpleFormatter();
 
@@ -68,17 +64,12 @@ public class CloudwatchHandler extends Handler {
 	private String logStreamName;
 
 	/**
-	 * The queue / buffer size
-	 */
-	private int queueLength = 1024;
-
-	/**
 	 * The maximum number of log entries to send in one go to the AWS Cloudwatch
 	 * Log service
 	 */
 	private int messagesBatchSize = 128;
 
-	private AtomicBoolean cloudwatchAppenderInitialised = new AtomicBoolean(false);
+	protected AtomicBoolean cloudwatchAppenderInitialised = new AtomicBoolean(false);
 
 	private ScheduledThreadPoolExecutor exe;
 
@@ -111,6 +102,7 @@ public class CloudwatchHandler extends Handler {
 
 	public void setQueueLength(int queueLength) {
 		this.queueLength = queueLength;
+		this.loggingEventsQueue = new LinkedBlockingQueue<>(queueLength);
 	}
 
 	public void setMessagesBatchSize(int messagesBatchSize) {
@@ -137,9 +129,18 @@ public class CloudwatchHandler extends Handler {
 			List<InputLogEvent> inputLogEvents = loggingEvents
 					.stream()
 					.sorted(Comparator.comparing(LogRecord::getMillis))
-					.map(loggingEvent -> new InputLogEvent()
-							.withTimestamp(loggingEvent.getMillis())
-							.withMessage(formatter.format(loggingEvent)))					
+					.map(loggingEvent -> {
+						String msg;
+						if(loggingEvent instanceof JsonLogRecord) {
+							msg = ((JsonLogRecord)loggingEvent).getMessage();
+						}
+						else {
+							msg = formatter.format(loggingEvent);
+						}
+						return new InputLogEvent()
+								.withTimestamp(loggingEvent.getMillis())
+								.withMessage(msg);
+					})					
 					.collect(toList());
 			
 			if (!loggingEvents.isEmpty()) {
@@ -166,7 +167,7 @@ public class CloudwatchHandler extends Handler {
 		}
 	}
 
-	private void initCloudwatchDaemon() {
+	protected void initCloudwatchDaemon() {
 		exe = new ScheduledThreadPoolExecutor(1);
 		exe.scheduleAtFixedRate(() -> {
 			if (loggingEventsQueue.size() > 0) {
@@ -217,7 +218,6 @@ public class CloudwatchHandler extends Handler {
 			this.close();
 		} else {
 			initializeClient();
-			loggingEventsQueue = new LinkedBlockingQueue<>(queueLength);
 			try {
 				initializeCloudwatchResources();
 				initCloudwatchDaemon();
