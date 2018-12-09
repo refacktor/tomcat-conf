@@ -8,8 +8,8 @@
 
   <Service name="Catalina">
     <Connector port="80" protocol="HTTP/1.1" connectionTimeout="20000" URIEncoding="UTF-8"
-	       compression="on" useSendfile="false" compressableMimeType="text/html,text/xml,text/json,text/javascript,text/css,text/plain,application/javascript,application/xml,application/xml+xhtml"
-               compressionMinSize="2048" redirectPort="8443" />
+	       compression="on" useSendfile="false" compressableMimeType="text/html,text/xml,text/json,text/javascript,text/css,text/plain,application/javascript,application/xml,application/xml+xhtml,application/json"
+               compressionMinSize="1024" redirectPort="8443" />
 
     <Engine name="Catalina" defaultHost="localhost">
 
