@@ -4,7 +4,6 @@ import java.io.CharArrayWriter;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.apache.catalina.connector.Request;
@@ -16,7 +15,15 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class CloudwatchAccessLogJsonValve extends AccessLogValve {
 
-	protected Logger jdkLogger = Logger.getLogger(CloudwatchAccessLogJsonValve.class.getName());
+	protected java.util.logging.Handler jdkLogger;
+	
+	public CloudwatchAccessLogJsonValve() {
+		this(new CloudwatchHandler());
+	}
+
+	public CloudwatchAccessLogJsonValve(CloudwatchHandler cloudwatchHandler) {
+		this.jdkLogger = cloudwatchHandler;
+	}
 
 	private String fields[];
 
@@ -59,7 +66,7 @@ public class CloudwatchAccessLogJsonValve extends AccessLogValve {
 			++n;
 		}
 
-		jdkLogger.log(new JsonLogRecord(json));
+		jdkLogger.publish(new JsonLogRecord(json));
 
 	}
 
@@ -78,14 +85,7 @@ public class CloudwatchAccessLogJsonValve extends AccessLogValve {
 		this.pattern = pairs.stream().map(s -> s.split("=")[1]).collect(Collectors.joining(""));
 		this.fields =  pairs.stream().map(s -> s.split("=")[0]).toArray(String[]::new);
 
-		System.err.println(new Date() + ": Pattern = " + pattern + " fields = " + Arrays.asList(fields));
-		
 		super.setPattern(pattern);
-
-		for (int i = 0; i < logElements.length; i++) {
-			System.err.printf("[%d] = %s\n", i,
-					logElements[i].getClass().getName());
-		}
 	}
 
 }

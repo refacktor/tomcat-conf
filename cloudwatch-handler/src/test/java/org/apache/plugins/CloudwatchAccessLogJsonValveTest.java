@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.LogRecord;
-import java.util.logging.Logger;
 
 import org.apache.catalina.LifecycleState;
 import org.apache.catalina.connector.Request;
@@ -24,7 +23,8 @@ public class CloudwatchAccessLogJsonValveTest {
 	@Test
 	public void test() throws JsonProcessingException, IOException {
 
-		CloudwatchAccessLogJsonValve target = Mockito.spy(new CloudwatchAccessLogJsonValve());
+		CloudwatchHandler jdkLogger = Mockito.mock(CloudwatchHandler.class);
+		CloudwatchAccessLogJsonValve target = Mockito.spy(new CloudwatchAccessLogJsonValve(jdkLogger));
 		
 		Mockito.when(target.getState()).thenReturn(LifecycleState.STARTED);
 		Mockito.when(target.getEnabled()).thenReturn(true);
@@ -40,8 +40,6 @@ public class CloudwatchAccessLogJsonValveTest {
 		final org.apache.coyote.Response coyoteResponse = new org.apache.coyote.Response();
 		coyoteResponse.setCommitted(true);
 		Mockito.when(response.getCoyoteResponse()).thenReturn(coyoteResponse);
-		
-		target.jdkLogger = Mockito.spy(Logger.getLogger(getClass().getName()));
 
 		List<LogRecord> out = new ArrayList<>();
 		
@@ -50,7 +48,7 @@ public class CloudwatchAccessLogJsonValveTest {
 			public Object answer(InvocationOnMock invocation) throws Throwable {
 				return out.add(invocation.getArgumentAt(0, LogRecord.class));
 			}
-		}).when(target.jdkLogger).log(Mockito.any(LogRecord.class));
+		}).when(target.jdkLogger).publish(Mockito.any(LogRecord.class));
 		
 		target.log(request, response, 0);
 
