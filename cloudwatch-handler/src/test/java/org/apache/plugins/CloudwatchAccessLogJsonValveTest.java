@@ -1,7 +1,9 @@
 package org.apache.plugins;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.LogRecord;
 
@@ -49,6 +51,9 @@ public class CloudwatchAccessLogJsonValveTest {
 				return out.add(invocation.getArgumentAt(0, LogRecord.class));
 			}
 		}).when(target.client).publish(Mockito.any(LogRecord.class));
+
+		Date nowz = Date.from(Instant.parse("2018-01-02T01:02:03Z"));
+		Mockito.when(target.timestamp()).thenReturn(nowz);
 		
 		target.log(request, response, 0);
 
@@ -57,5 +62,6 @@ public class CloudwatchAccessLogJsonValveTest {
 		ObjectMapper om = new ObjectMapper();
 		JsonNode readTree = om.readTree(lr.getMessage());
 		Assert.assertEquals(readTree.get("protocol").asText(), "httpx");
+		Assert.assertEquals(readTree.get("server_ts").asText(), "2018-01-01 17:02:03.000 PST");
 	}
 }
