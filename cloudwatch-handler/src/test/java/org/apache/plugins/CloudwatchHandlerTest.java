@@ -31,8 +31,8 @@ public class CloudwatchHandlerTest {
 		}
 	};
 
-	CloudwatchHandler ch
-			= new CloudwatchHandler(formatter, "logGroupName", "logStreamName");
+	CloudwatchClient ch
+			= CloudwatchClient.instance = new CloudwatchClient(formatter, "logGroupName", "logStreamName");
 
 	List<PutLogEventsRequest> requests = new ArrayList<>();
 
@@ -41,7 +41,6 @@ public class CloudwatchHandlerTest {
 	@BeforeClass
 	public void init() {
 		ch.awsLogsClient = Mockito.mock(AWSLogsClient.class);
-		ch.cloudwatchAppenderInitialised.set(true);
 		pler.setNextSequenceToken("1111");
 		ch.initCloudwatchDaemon();
 		

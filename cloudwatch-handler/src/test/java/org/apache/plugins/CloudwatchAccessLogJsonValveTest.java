@@ -23,7 +23,7 @@ public class CloudwatchAccessLogJsonValveTest {
 	@Test
 	public void test() throws JsonProcessingException, IOException {
 
-		CloudwatchHandler jdkLogger = Mockito.mock(CloudwatchHandler.class);
+		CloudwatchClient jdkLogger = Mockito.mock(CloudwatchClient.class);
 		CloudwatchAccessLogJsonValve target = Mockito.spy(new CloudwatchAccessLogJsonValve(jdkLogger));
 		
 		Mockito.when(target.getState()).thenReturn(LifecycleState.STARTED);
@@ -48,7 +48,7 @@ public class CloudwatchAccessLogJsonValveTest {
 			public Object answer(InvocationOnMock invocation) throws Throwable {
 				return out.add(invocation.getArgumentAt(0, LogRecord.class));
 			}
-		}).when(target.jdkLogger).publish(Mockito.any(LogRecord.class));
+		}).when(target.client).publish(Mockito.any(LogRecord.class));
 		
 		target.log(request, response, 0);
 

@@ -15,14 +15,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class CloudwatchAccessLogJsonValve extends AccessLogValve {
 
-	protected java.util.logging.Handler jdkLogger;
+	protected CloudwatchClient client;
 	
 	public CloudwatchAccessLogJsonValve() {
-		this(new CloudwatchHandler());
+		this(CloudwatchClient.getInstance());
 	}
 
-	public CloudwatchAccessLogJsonValve(CloudwatchHandler cloudwatchHandler) {
-		this.jdkLogger = cloudwatchHandler;
+	public CloudwatchAccessLogJsonValve(CloudwatchClient cloudwatchHandler) {
+		this.client = cloudwatchHandler;
 	}
 
 	private String fields[];
@@ -66,7 +66,7 @@ public class CloudwatchAccessLogJsonValve extends AccessLogValve {
 			++n;
 		}
 
-		jdkLogger.publish(new JsonLogRecord(json));
+		client.publish(new JsonLogRecord(json));
 
 	}
 
