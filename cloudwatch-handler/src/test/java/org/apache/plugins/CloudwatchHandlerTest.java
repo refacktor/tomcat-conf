@@ -42,7 +42,7 @@ public class CloudwatchHandlerTest {
 	public void init() {
 		ch.awsLogsClient = Mockito.mock(AWSLogsClient.class);
 		pler.setNextSequenceToken("1111");
-		ch.initCloudwatchDaemon();
+		ch.initializeBackgroundThreads();
 		
 		Mockito.when(ch.awsLogsClient
 				.putLogEvents(Mockito.any(PutLogEventsRequest.class)))
