@@ -82,7 +82,7 @@ public class CloudwatchAccessLogJsonValve extends AccessLogValve {
 	@Override
 	public void setPattern(String patternParm) {
 		String defaultPattern =
-				"server_ts=%{y-MM-dd HH:mm:ss.SSS z}t,remote_ip=%a,local_ip=%A,method=%m,url=%U,query_string=%q,protocol=%H,http_status=%s,bytes_sent=%B,referer=%{Referer}i,user_agent=%{User-Agent}i,time_elapsed=%D,session_id=%S,user_id=%{user_id}s,agent_proxy=%{agent_proxy}s,agent_id=%{agent_device_id}c,time_to_first_byte=%F,thread_name=%I";
+				"server_ts=%{y-MM-dd HH:mm:ss.SSS z}t,remote_ip=%a,local_ip=%A,method=%m,url=%U,query_string=%q,protocol=%H,http_status=%s,bytes_sent=%B,referer=%{Referer}i,user_agent=%{User-Agent}i,time_elapsed=%D,session_id=%S,user_id=%{user_id}s,agent_proxy=%{agent_proxy}s,agent_id=%{agent_device_id}c,time_to_first_byte=%F,thread_name=%I,host=%{Host}i";
 
 		List<String> pairs = Arrays.asList((patternParm.equals("default") ? defaultPattern : patternParm).split(","));
 		

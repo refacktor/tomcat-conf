@@ -21,6 +21,7 @@ CREATE TABLE `log_access` (
   `referer` text DEFAULT NULL,
   `user_agent` text DEFAULT NULL,
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `host` varchar(250)
   PRIMARY KEY (`id`),
   KEY `ts` (`ts`),
   KEY `user_log` (`user_id`,`url`(8),`ts`)
