@@ -10,11 +10,11 @@ import java.util.logging.LogRecord;
 import org.apache.catalina.LifecycleState;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
+import org.junit.Assert;
+import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.testng.Assert;
-import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -57,11 +57,11 @@ public class CloudwatchAccessLogJsonValveTest {
 		
 		target.log(request, response, 0);
 
-		Assert.assertEquals(out.size(), 1);
+		Assert.assertEquals(1, out.size());
 		JsonLogRecord lr = (JsonLogRecord) out.get(0);
 		ObjectMapper om = new ObjectMapper();
 		JsonNode readTree = om.readTree(lr.getMessage());
-		Assert.assertEquals(readTree.get("protocol").asText(), "httpx");
-		Assert.assertEquals(readTree.get("server_ts").asText(), "2018-01-01 17:02:03.000 PST");
+		Assert.assertEquals("httpx", readTree.get("protocol").asText());
+		Assert.assertEquals("2018-01-01 17:02:03.000 PST", readTree.get("server_ts").asText());
 	}
 }

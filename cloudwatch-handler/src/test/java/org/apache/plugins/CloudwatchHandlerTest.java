@@ -6,12 +6,13 @@ import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 import com.amazonaws.services.logs.AWSLogsClient;
 import com.amazonaws.services.logs.model.InputLogEvent;
@@ -19,8 +20,6 @@ import com.amazonaws.services.logs.model.PutLogEventsRequest;
 import com.amazonaws.services.logs.model.PutLogEventsResult;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import junit.framework.Assert;
 
 public class CloudwatchHandlerTest {
 
@@ -38,7 +37,7 @@ public class CloudwatchHandlerTest {
 
 	PutLogEventsResult pler = new PutLogEventsResult();
 
-	@BeforeClass
+	@Before
 	public void init() {
 		ch.awsLogsClient = Mockito.mock(AWSLogsClient.class);
 		pler.setNextSequenceToken("1111");
@@ -85,7 +84,7 @@ public class CloudwatchHandlerTest {
 		Assert.assertEquals("{\"hello\":\"world\"}", inputLogEvent.getMessage());
 	}
 
-	@AfterClass
+	@After
 	public void cleanup() {
 		ch.close();
 	}
